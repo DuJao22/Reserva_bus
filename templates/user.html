@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Usuário</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .viagem {
+            background: #e0e0e0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .poltronas {
+            display: grid;
+            grid-template-columns: repeat(4, auto);
+            gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+            padding: 10px;
+            width: fit-content;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .poltrona {
+            width: 50px;
+            height: 50px;
+            background-color: green;
+            color: white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .poltrona.ocupada {
+            background-color: red;
+            cursor: not-allowed;
+        }
+        .poltrona:hover:not(.ocupada) {
+            background-color: #45a049;
+        }
+        .btn {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function selecionarPoltrona(poltrona, inputId) {
+            if (!poltrona.classList.contains('ocupada')) {
+                document.getElementById(inputId).value = poltrona.innerText;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Bem-vindo, {{ nome_usuario }}!</h1>
+
+        <h3>Suas Reservas</h3>
+        <div class="info">
+            {% if reservas %}
+                {% for reserva in reservas %}
+                    <div class="viagem">
+                        <p><strong>Destino:</strong> {{ reserva[2] }}</p>
+                        <p><strong>Data:</strong> {{ reserva[3] }} - <strong>Poltrona:</strong> {{ reserva[4] }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Você ainda não possui reservas.</p>
+            {% endif %}
+        </div>
+
+        <h3>Viagens Disponíveis</h3>
+        {% if viagens %}
+            {% for viagem in viagens %}
+                <div class="viagem">
+                    <p><strong>Destino:</strong> {{ viagem[2] }}</p>
+                    <p> <strong>Horario :</strong> {{ viagem[4] }}<strong> - Data:</strong> {{ viagem[3] }}</p>
+                    <h4>Escolha sua Poltrona</h4>
+                    <div class="poltronas">
+                        {% for i in range(1, 51) %}
+                            <div class="poltrona {% if i in poltronas_ocupadas[viagem[0]] %}ocupada{% endif %}" 
+                                 onclick="selecionarPoltrona(this, 'poltrona_{{ viagem[0] }}')">
+                                {{ i }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <form method="POST" action="/reservar">
+                        <input type="hidden" name="viagem_id" value="{{ viagem[0] }}">
+                        <input type="number" id="poltrona_{{ viagem[0] }}" name="poltrona" placeholder="Poltrona" required readonly>
+			<p><input type="text" id="nome" name="nome" placeholder="Nome" required>
+                        <button type="submit" class="btn">Reservar</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Nenhuma viagem disponível no momento.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

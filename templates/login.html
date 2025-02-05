@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .form-container h2 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .toggle-form {
+            color: #4CAF50;
+            cursor: pointer;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Login</h2>
+    <form action="/login" method="POST">
+        <input type="text" name="email" placeholder="Email" required><br>
+        <input type="password" name="senha" placeholder="Senha" required><br>
+        <button type="submit">Entrar</button>
+    </form>
+
+    <div class="toggle-form">
+        <button id="toggleButton">Criar Login</button>
+    </div>
+
+    <div id="registerForm" class="hidden">
+        <h2>Criar Conta</h2>
+        <form action="/criar_usuario" method="POST">
+            <input type="text" name="nome" placeholder="Nome" required><br>
+            <input type="email" name="email" placeholder="Email" required><br>
+            <input type="password" name="senha" placeholder="Senha" required><br>
+            <input type="text" name="cidade" placeholder="Cidade" required><br>
+            <button type="submit">Cadastrar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("toggleButton").onclick = function() {
+        var registerForm = document.getElementById("registerForm");
+        registerForm.classList.toggle("hidden");
+    };
+</script>
+
+</body>
+</html>
