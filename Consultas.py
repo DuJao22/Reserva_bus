@@ -7,24 +7,28 @@ def obter_poltronas_com_dados():
     with conectar_bd() as con:
         cur = con.cursor()
         
-        # Consulta para obter as poltronas, passageiros e destinos
+        # Consulta para obter todas as reservas
         cur.execute('''
-            SELECT r.poltrona, u.nome AS passageiro, v.destino
-            FROM reservas r
-            JOIN usuarios u ON r.usuario_id = u.id
-            JOIN viagens v ON r.viagem_id = v.id
+            SELECT id, usuario_id, viagem_id, poltrona, nome, embarque, desembarque, status
+            FROM reservas
         ''')
         
         resultado = cur.fetchall()
         
-        poltronas = []
+        reservas = []
         for row in resultado:
-            poltronas.append({
-                "numero": row[0],
-                "passageiro": row[1],
-                "destino": row[2]
+            reservas.append({
+                "id": row[0],
+                "usuario_id": row[1],
+                "viagem_id": row[2],
+                "numero": row[3],
+                "nome": row[4],
+                "embarque": row[5],
+                "desembarque": row[6],
+                "status": row[7]
             })
         
-        return poltronas
+        return reservas
+
 
 
