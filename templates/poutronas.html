@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Usuário</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .viagem {
+            background: #e0e0e0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .poltronas {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 10px auto;
+            width: 50%;
+            text-align: center;
+        }
+        .poltrona {
+            width: 50px;
+            height: 50px;
+            background-color: green;
+            color: white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .ocupada {
+            background-color: red;
+            cursor: not-allowed;
+        }
+        .corredor {
+            background-color: transparent;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function selecionarPoltrona(poltrona, inputId) {
+            if (!poltrona.classList.contains('ocupada')) {
+                document.getElementById(inputId).value = poltrona.innerText;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Bem-vindo ao seu Painel</h2>
+
+        <h3>Suas Reservas</h3>
+        <div class="info">
+            {% if reservas %}
+                {% for reserva in reservas %}
+                    <div class="viagem">
+                        <p><strong>Origem:</strong> {{ reserva[1] }} - <strong>Destino:</strong> {{ reserva[2] }}</p>
+                        <p><strong>Data:</strong> {{ reserva[3] }} - <strong>Poltrona:</strong> {{ reserva[4] }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Você ainda não possui reservas.</p>
+            {% endif %}
+        </div>
+
+        <h3>Viagens Disponíveis</h3>
+        {% if viagens %}
+            {% for viagem in viagens %}
+                <div class="viagem">
+                    <p><strong>Origem:</strong> {{ viagem[1] }} - <strong>Destino:</strong> {{ viagem[2] }}</p>
+                    <p><strong>Data:</strong> {{ viagem[3] }}</p>
+                    <h4>Escolha sua Poltrona</h4>
+                    <div class="poltronas">
+                        {% set layout = [
+                            [1, 2, None, 3, 4],
+                            [5, 6, None, 7, 8],
+                            [9, 10, None, 11, 12]
+                        ] %}
+                        {% for row in layout %}
+                            {% for seat in row %}
+                                {% if seat is none %}
+                                    <div class="corredor"></div>
+                                {% else %}
+                                    <div class="poltrona {% if seat in poltronas_ocupadas %}ocupada{% endif %}"
+                                        onclick="selecionarPoltrona(this, 'poltrona_{{ viagem[0] }}')">
+                                        {{ seat }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                    <form method="POST" action="/reservar">
+                        <input type="hidden" name="viagem_id" value="{{ viagem[0] }}">
+                        <input type="number" id="poltrona_{{ viagem[0] }}" name="poltrona" placeholder="Poltrona" required readonly>
+                        <button type="submit" class="btn">Reservar</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Nenhuma viagem disponível no momento.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

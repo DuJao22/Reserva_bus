@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Usuário</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #4B0082;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            margin: 20px auto;
+        } 
+        .left-panel, .right-panel {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+            flex: 1;
+            margin: 10px;
+            min-width: 300px;
+        }
+        .poltronas {
+            display: grid;
+            grid-template-columns: repeat(4, auto);
+            gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+            padding: 10px;
+            width: fit-content;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.1);
+        }
+        .poltrona {
+            width: 50px;
+            height: 50px;
+            background-color: #4B0082;
+            color: white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .poltrona.ocupada {
+            background-color: red;
+            cursor: not-allowed;
+        }
+        .poltrona:hover:not(.ocupada) {
+            background-color: #6A0DAD;
+        }
+        .btn {
+            background-color: #4B0082;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .image-container {
+            margin-top: 20px;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+         /* Contêiner para permitir rolagem horizontal */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    padding: 10px;
+}
+
+/* Estilização da Tabela */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+    background-color: #121212; /* Preto */
+    color: #e0e0e0; /* Cinza claro para contraste */
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Cabeçalho da Tabela */
+th {
+    background-color: #6a0dad; /* Roxo */
+    color: #ffffff;
+    text-transform: uppercase;
+    padding: 12px;
+    text-align: left;
+}
+
+/* Células da Tabela */
+td {
+    padding: 10px;
+    border: 1px solid #6a0dad; /* Roxo */
+}
+
+/* Alternância de cores nas linhas */
+tr:nth-child(even) {
+    background-color: #1e1e1e; /* Cinza escuro */
+}
+
+/* Efeito de hover nas linhas */
+tr:hover {
+    background-color: #6a0dad; /* Roxo */
+    color: #ffffff;
+}
+
+/* Responsividade para telas menores */
+@media screen and (max-width: 600px) {
+    th, td {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    table {
+        min-width: 100%;
+    }
+}
+
+        }
+    </style>
+    <script>
+        function selecionarPoltrona(poltrona, inputId) {
+            if (!poltrona.classList.contains('ocupada')) {
+                document.getElementById(inputId).value = poltrona.innerText;
+            }
+        }
+
+        function atualizarDesembarque(embarqueId, desembarqueId) {
+            var embarque = document.getElementById(embarqueId);
+            var desembarque = document.getElementById(desembarqueId);
+            var index = embarque.selectedIndex;
+            
+            for (var i = 0; i < desembarque.options.length; i++) {
+                desembarque.options[i].style.display = i > index ? 'block' : 'none';
+            }
+            desembarque.selectedIndex = index + 1;
+        }
+    </script>
+</head>
+<body>
+    <div class="header">Empresa Turismo</div>
+    <div class="image-container">
+        <img src="https://gizmodo.uol.com.br/wp-content/blogs.dir/8/files/2023/04/onibus-double-decker-aguia-branca.jpg" alt="Imagem da Empresa">
+    </div>
+    <div class="container">
+        <div class="left-panel">
+            <h3>Bem-vindo, {{ nome_usuario }}!</h3>
+            <h3>Suas Reservas</h3>
+            <div class="info">
+    {% if reservas %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Embarque</th>
+                        <th>Desembarque</th>
+                        <th>Data</th>
+                        <th>Passageiro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reserva in reservas %}
+                        <tr>
+                            <td>{{ reserva[5] }}</td>
+                            <td>{{ reserva[6] }}</td>
+                            <td>{{ reserva[10] }}</td>
+                            <td>{{ reserva[4] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Você ainda não possui reservas.</p>
+    {% endif %}
+</div>
+
+        </div>
+        <div class="right-panel">
+            <h3>Viagens Disponíveis</h3>
+            {% if viagens %}
+                {% for viagem in viagens %}
+                    <div class="viagem">
+                        <p><strong>Destino:</strong> {{ viagem[2] }}</p>
+                        <p><strong>Horário:</strong> {{ viagem[4] }} - <strong>Data:</strong> {{ viagem[3] }}</p>
+                        <p>
+                        <form method="POST" action="/reservar">
+                            <label for="embarque_{{ viagem[0] }}">Embarque:</label>
+                            <select id="embarque_{{ viagem[0] }}" name="embarque" required onchange="atualizarDesembarque('embarque_{{ viagem[0] }}', 'desembarque_{{ viagem[0] }}')">
+                                {% for opcao in pontos_viagens[viagem[0]] %}
+                                    <option value="{{ opcao }}">{{ opcao }}</option>
+                                {% endfor %}
+                            </select>
+                        </p>
+                        <p>
+                            <label for="desembarque_{{ viagem[0] }}">Desembarque:</label>
+                            <select id="desembarque_{{ viagem[0] }}" name="desembarque" required>
+                                {% for opcao in pontos_viagens[viagem[0]] %}
+                                    <option value="{{ opcao }}">{{ opcao }}</option>
+                                {% endfor %}
+                            </select>
+                        </p>
+                        <h4>Escolha sua Poltrona</h4>
+                        <div class="poltronas">
+                            {% for i in range(1, 51) %}
+                                <div class="poltrona {% if i in poltronas_ocupadas[viagem[0]] %}ocupada{% endif %}" onclick="selecionarPoltrona(this, 'poltrona_{{ viagem[0] }}')">
+                                    {{ i }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                            <input type="hidden" name="viagem_id" value="{{ viagem[0] }}">
+                            <input type="number" id="poltrona_{{ viagem[0] }}" name="poltrona" placeholder="Poltrona" required readonly>
+                            <p><input type="text" name="nome" placeholder="Nome" required></p>
+                            <button type="submit" class="btn">Reservar</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Nenhuma viagem disponível no momento.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

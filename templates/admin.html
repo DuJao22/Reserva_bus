@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Administrador - Sistema de Reservas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        .input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #6a0dad;
+            background-color: #1e1e1e;
+            color: white;
+            box-sizing: border-box;
+        }
+        .btn {
+            background-color: #6a0dad;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #8b00ff;
+        }
+ /* Container das poltronas */
+.poltronas {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    justify-content: center;
+    max-width: 400px;
+    margin: auto;
+    background-color: #222; /* Fundo escuro */
+    padding: 20px;
+    border-radius: 10px;
+}
+
+/* Estilização padrão das poltronas */
+.poltrona {
+    width: 50px;
+    height: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: purple;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Poltrona ocupada */
+.poltrona.ocupada {
+    background-color: red;
+}
+
+/* Espaço do corredor */
+.corredor {
+    width: 50px;
+    height: 50px;
+    background: transparent;
+}
+
+/* Responsividade para tablets e telas médias */
+@media (max-width: 768px) {
+    .poltronas {
+        grid-template-columns: repeat(5, 1fr);
+        max-width: 350px;
+        gap: 8px;
+    }
+
+    .poltrona {
+        width: 45px;
+        height: 45px;
+        font-size: 14px;
+    }
+}
+
+/* Responsividade para celulares */
+@media (max-width: 480px) {
+    .poltronas {
+        grid-template-columns: repeat(5, 1fr);
+        max-width: 300px;
+        gap: 5px;
+    }
+
+    .poltrona {
+        width: 40px;
+        height: 40px;
+        font-size: 12px;
+    }
+}
+
+.poltronas {
+            display: grid;
+            grid-template-columns: repeat(4, auto);
+            gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+            padding: 10px;
+            width: fit-content;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.1);
+        }
+        .poltrona {
+            width: 50px;
+            height: 50px;
+            background-color: #4B0082;
+            color: white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .poltrona.ocupada {
+            background-color: red;
+            cursor: not-allowed;
+        }
+        .poltrona:hover:not(.ocupada) {
+            background-color: #6A0DAD;
+        }
+
+
+
+        /* Balão de informações */
+        .balão {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            z-index: 10;
+            max-width: 200px;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .balão .close {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        /* Tabela de Viagens */
+        .table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            border: 1px solid #6a0dad;
+            padding: 10px;
+            text-align: center;
+        }
+        /* Tabela de Reservas Pendentes */
+        .reservas-pendentes {
+            margin-top: 30px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .reservas-pendentes th, .reservas-pendentes td {
+            border: 1px solid #6a0dad;
+            padding: 10px;
+            text-align: center;
+        }
+        .reservas-pendentes button {
+            background-color: #8b00ff;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .poltronas {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .poltronas {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .input {
+                padding: 10px;
+            }
+            .poltrona {
+                width: 40px;
+                height: 40px;
+                font-size: 12px;
+            }
+            .table, .reservas-pendentes {
+                font-size: 12px;
+            }
+        }
+
+	#paradas-container {
+    margin-top: 20px;
+}
+
+#paradas-list {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-left: 20px;
+}
+
+.input, .btn {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    box-sizing: border-box;
+}
+
+#paradas-container .input {
+    margin-bottom: 5px;
+}
+
+#paradas-container .parada-item {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+#paradas-container .parada-item input {
+    margin-right: 10px;
+    flex-grow: 1;
+}
+
+#paradas-container .parada-item button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+#paradas-container .parada-item button:hover {
+    background-color: #d32f2f;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+/* Estilos gerais do balão */
+.balão {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #2c3e50; /* Cor escura de fundo */
+    color: #fff; /* Texto branco */
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: none; /* Inicialmente escondido */
+    z-index: 1000;
+}
+
+.balão h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.balão table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.balão table td {
+    padding: 8px;
+    text-align: left;
+}
+
+.balão table td strong {
+    color: white; /* Cor roxa para os títulos */
+}
+
+.balão .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    color: #fff;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.balão .close:hover {
+    color: #e74c3c; /* Cor vermelha quando passar o mouse */
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    .balão {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .balão h3 {
+        font-size: 1.2em;
+    }
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Painel do Administrador</h1>
+        {% if viagens|length == 0 %} <!-- Verifica se não há viagens cadastradas -->
+        <form method="POST">
+    <input type="text" name="destino" placeholder="Destino" class="input" required>
+    <input type="text" name="horario" placeholder="Horário" class="input" required>
+    <input type="text" name="onibus" placeholder="Ônibus" class="input" required>
+    <input type="date" name="data" placeholder="Data" class="input" required>
+    
+    <!-- Paradas Dinâmicas -->
+    <div id="paradas-container">
+        <label for="paradas">Paradas</label>
+        <ul id="paradas-list">
+            <!-- As paradas serão adicionadas aqui -->
+        </ul>
+        <button type="button" class="btn" id="adicionar-parada">Adicionar Parada</button>
+    </div>
+    
+    <button type="submit" class="btn">Cadastrar Viagem</button>
+</form>
+
+
+        {% else %}
+           <p>Viagens em aberto, não é possível cadastrar nova viagem no momento.</p>
+        {% endif %}
+
+        <!-- Tabela de Viagens -->
+        <h2>Viagem Atual</h2>
+        <table class="table">
+            <tr>
+                <th>ID</th>
+                <th>Destino</th>
+                <th>Data</th>
+                <th>Horário</th>
+                <th>Ônibus</th>
+            </tr>
+            {% for viagem in viagens %}
+            <tr>
+                <td>{{ viagem[0] }}</td>
+                <td>{{ viagem[2] }}</td>
+                <td>{{ viagem[3] }}</td>
+                <td>{{ viagem[4] }}</td>
+                <td>{{ viagem[5] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+
+        <!-- Tabela de Reservas Pendentes -->
+        
+        <h2>Reservas Pendentes</h2>
+        <table class="reservas-pendentes">
+            <tr>
+                <th>ID</th>
+                <th>Passageiro</th>
+                <th>Destino</th>
+                <th>Poltrona</th>
+                <th>Confirmar</th>
+            </tr>
+            {% for reserva in reservas_pendentes %}
+            <tr>
+                <td>{{ reserva[0] }}</td>
+                <td>{{ reserva[4] }}</td>
+                <td>{{ reserva[5] }} - <p></p> {{ reserva[6] }} </td>
+                <td>{{ reserva[3] }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('confirmar_reserva') }}">
+                        <input type="hidden" name="reserva_id" value="{{ reserva[0] }}">
+                        <button type="submit">Confirmar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+
+        <!-- Seção de Poltronas -->
+        <h2>Selecione as Poltronas</h2>
+        <div class="poltronas">
+            {% set layout = [
+                [1, 2, none, 3, 4],
+                [5, 6, none, 7, 8],
+                [9, 10, none, 11, 12],
+                [13, 14, none, 15, 16],
+                [17, 18, none, 19, 20],
+                [21, 22, none, 23, 24],
+                [25, 26, none, 27, 28],
+                [29, 30, none, 31, 32],
+                [33, 34, none, 35, 36],
+                [37, 38, none, 39, 40],
+                [41, 42, none, 43, 44],
+                [45, 46, none, 47, 48],
+                [49, 50, none, none, none]
+            ] %}
+
+            {% for row in layout %}
+                {% for seat in row %}
+                    {% if seat is none %}
+                        <div class="corredor"></div>
+                    {% else %}
+                        <div class="poltrona {% if seat in poltronas_ocupadas %}ocupada{% endif %}" 
+                             onclick="mostrarBalao('{{ seat }}')">
+                            {{ seat }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Balão de Informações -->
+<div id="balão" class="balão">
+    <span class="close" onclick="fecharBalao()">x</span>
+    <h3>Informações da Reserva</h3>
+    <table>
+        <tr>
+            <td><strong>Passageiro:</strong></td>
+            <td><span id="passageiro"></span></td>
+        </tr>
+        <tr>
+            <td><strong>Embarque:</strong></td>
+            <td><span id="embarque"></span></td>
+        </tr>
+        <tr>
+            <td><strong>Desembarque:</strong></td>
+            <td><span id="desembarque"></span></td>
+        </tr>
+        <tr>
+            <td><strong>Poltrona:</strong></td>
+            <td><span id="poltrona"></span></td>
+        </tr>
+    </table>
+</div>
+
+    </div>
+
+    <script>
+        const reservas = {{ reserva | tojson }}; // Passar as reservas do servidor para o JavaScript
+
+        function mostrarBalao(seat) {
+            const reserva = reservas.find(r => r.numero == seat); // Encontrar reserva pela poltrona
+            if (reserva) {
+                const balao = document.getElementById('balão');
+                const usuario = document.getElementById('passageiro');
+                const embarqe = document.getElementById('embarque');
+                const desembarque = document.getElementById('desembarque');
+                const poltrona = document.getElementById('poltrona');
+
+                // Atualizar o conteúdo com dados reais
+                usuario.textContent = reserva.nome;
+                embarque.textContent = reserva.embarque;
+               desembarque.textContent = reserva.desembarque;
+                poltrona.textContent = reserva.numero;
+
+                // Exibir o balão
+                balao.style.display = 'block';
+            }
+        }
+
+        function fecharBalao() {
+            document.getElementById('balão').style.display = 'none';
+        }
+
+document.getElementById('adicionar-parada').addEventListener('click', function() {
+        // Cria uma nova list item (li) para a parada
+        const liItem = document.createElement('li');
+        liItem.classList.add('parada-item');
+
+        // Cria o campo de input para a parada
+        const inputParada = document.createElement('input');
+        inputParada.type = 'text';
+        inputParada.name = 'paradas[]'; // Usando um array para enviar várias paradas
+        inputParada.placeholder = 'Nome da Parada';
+        inputParada.classList.add('input');
+        inputParada.required = true;
+
+        // Cria o botão de excluir a parada
+        const btnRemover = document.createElement('button');
+        btnRemover.type = 'button';
+        btnRemover.textContent = 'Remover';
+        btnRemover.addEventListener('click', function() {
+            liItem.remove();  // Remove a parada
+        });
+
+        // Adiciona o input e o botão dentro do item da lista
+        liItem.appendChild(inputParada);
+        liItem.appendChild(btnRemover);
+
+        // Adiciona o item da lista no ul
+        document.getElementById('paradas-list').appendChild(liItem);
+    });
+    </script>
+</body>
+</html>
