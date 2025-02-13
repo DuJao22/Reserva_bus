@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 import sqlitecloud
 from Consultas import obter_poltronas_com_dados
@@ -217,7 +217,6 @@ def admin():
 
         reserva = obter_poltronas_com_dados()
         print(reservas_pendentes)
-        
         
         
         return render_template('admin.html', 
