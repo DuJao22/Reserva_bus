@@ -1,7 +1,21 @@
-import sqlite3
+import psycopg2
+from psycopg2 import sql
+
+# Configurações do banco de dados PostgreSQL
+DB_HOST = "dpg-cukn8dqn91rc73at9ca0-a.oregon-postgres.render.com"
+DB_NAME = "reserva_buss"
+DB_USER = "reserva_buss_user"
+DB_PASSWORD = "lPGSnYEbsyHqohl2PPVb559392YuoNhM"
+DB_PORT = 5432
 
 def conectar_bd():
-    return sqlite3.connect('banco.db', check_same_thread=False)
+    return psycopg2.connect(
+        host=DB_HOST,
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        port=DB_PORT
+    )
 
 def obter_poltronas_com_dados():
     with conectar_bd() as con:
@@ -29,6 +43,3 @@ def obter_poltronas_com_dados():
             })
         
         return reservas
-
-
-
