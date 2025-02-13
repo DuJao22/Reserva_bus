@@ -1,90 +1,85 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import sqlitecloud
 from Consultas import obter_poltronas_com_dados
-from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'chave_secreta'
 
 
+# Função para conectar ao banco de dados
 def conectar_bd():
     try:
-        return sqlitecloud.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
+        return sqlite.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
     except Exception as e:
         print(f"Erro ao conectar ao banco: {e}")
         return None
-        
+
+
 # Criar tabelas no banco de dados
 def criar_tabelas():
-    con = conectar_bd()
-    if con:
-        try:
-            cur = con.cursor()
-            
-            # Criar tabelas
-            cur.execute('''CREATE TABLE IF NOT EXISTS usuarios (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                nome TEXT,
-                                email TEXT UNIQUE,
-                                senha TEXT,
-                                tipo TEXT DEFAULT 'user',
-                                idade INTEGER,
-                                cidade TEXT)''')
+    with conectar_bd() as con:
+        cur = con.cursor()
+        cur.execute('''CREATE TABLE IF NOT EXISTS usuarios (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            nome TEXT,
+                            email TEXT UNIQUE,
+                            senha TEXT,
+                            tipo TEXT DEFAULT 'user',
+                            idade INTEGER,
+                            cidade TEXT)''')
 
-            cur.execute('''CREATE TABLE IF NOT EXISTS viagens (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                origem TEXT,
-                                destino TEXT,
-                                data TEXT,
-                                horario TEXT,
-                                onibus TEXT)''')
+        # Criar a tabela 'viagens'
+        cur.execute('''CREATE TABLE IF NOT EXISTS viagens (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            origem TEXT,
+                            destino TEXT,
+                            data TEXT,
+                            horario TEXT,
+                            onibus TEXT)''')
 
-            cur.execute('''CREATE TABLE IF NOT EXISTS pontos_parada (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                viagem_id INTEGER,
-                                parada TEXT,
-                                valor REAL,
-                                FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
+        # Criar a tabela 'pontos_parada'
+        cur.execute('''CREATE TABLE IF NOT EXISTS pontos_parada (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            viagem_id INTEGER,
+                            parada TEXT,
+                            valor REAL,
+                            FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
 
-            cur.execute('''CREATE TABLE IF NOT EXISTS reservas (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                usuario_id INTEGER,
-                                viagem_id INTEGER,
-                                poltrona INTEGER,
-                                nome TEXT,
-                                embarque TEXT,
-                                desembarque TEXT,
-                                status TEXT,
-                                FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
-                                FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
+        # Criar a tabela 'reservas'
+        cur.execute('''CREATE TABLE IF NOT EXISTS reservas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    usuario_id INTEGER,
+                    viagem_id INTEGER,
+                    poltrona INTEGER,
+                    nome TEXT,
+                    embarque TEXT,
+                    desembarque TEXT,
+                    status TEXT,  -- Agora a coluna status está incluída corretamente
+                    FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
+                    FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
 
-            cur.execute('''CREATE TABLE IF NOT EXISTS reservas_pontos (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                reserva_id INTEGER,
-                                embarque_id INTEGER,
-                                desembarque_id INTEGER,
-                                FOREIGN KEY(reserva_id) REFERENCES reservas(id),
-                                FOREIGN KEY(embarque_id) REFERENCES pontos_parada(id),
-                                FOREIGN KEY(desembarque_id) REFERENCES pontos_parada(id))''')
 
+
+        # Criar a tabela 'reservas_pontos' com embarque e desembarque referenciando 'pontos_parada'
+        cur.execute('''CREATE TABLE IF NOT EXISTS reservas_pontos (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            reserva_id INTEGER,
+                            embarque_id INTEGER,
+                            desembarque_id INTEGER,
+                            FOREIGN KEY(reserva_id) REFERENCES reservas(id),
+                            FOREIGN KEY(embarque_id) REFERENCES pontos_parada(id),
+                            FOREIGN KEY(desembarque_id) REFERENCES pontos_parada(id))''')
+
+        # Commit para salvar as mudanças
+        con.commit()
+
+       # Criar usuário administrador padrão se não existir
+        cur.execute("SELECT * FROM usuarios WHERE email = ?", ("Admin_buser",))
+        if not cur.fetchone():
+            cur.execute("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)", 
+                        ("Admin Buser", "Admin_buser", "ADM_BUSS", "admin"))
             con.commit()
-
-            # Verificar se o usuário administrador já existe antes de inseri-lo
-            cur.execute("SELECT id FROM usuarios WHERE email = ?", ("admin_buser",))
-            admin_existe = cur.fetchone()
-
-            if not admin_existe:
-                cur.execute("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)",
-                            ("Admin Buser", "admin_buser", generate_password_hash("ADM_BUSS"), "admin"))
-                con.commit()
-
-        except sqlitecloud.exceptions.SQLiteCloudIntegrityError as e:
-            print(f"Erro de integridade ao criar tabelas: {e}")
-        except Exception as e:
-            print(f"Erro ao criar tabelas: {e}")
-        finally:
-            con.close()
 
 criar_tabelas()
 
@@ -220,22 +215,24 @@ def admin():
                WHERE r.status = 'Pendente' ''')
         reservas_pendentes = cur.fetchall()
 
-        # Buscar todos os pontos de parada para as viagens
-        pontos_parada = {}
-        for viagem in viagens:
-            viagem_id = viagem[0]
-            cur.execute("SELECT parada FROM pontos_parada WHERE viagem_id = ?", (viagem_id,))
-            pontos = [row[0] for row in cur.fetchall()]
-            pontos_parada[viagem_id] = pontos
-        
         con.close()
 
+        reserva = obter_poltronas_com_dados()
+        print(reservas_pendentes)
+        
+        
+        
         return render_template('admin.html', 
                                viagens=viagens, 
                                poltronas_ocupadas=poltronas_ocupadas, 
-                               reservas_pendentes=reservas_pendentes,
-                               pontos_parada=pontos_parada, 
-                               nome_usuario=nome_usuario)
+                               reservas_pendentes=reservas_pendentes, 
+                               nome_usuario=nome_usuario,
+                               reserva=reserva)
+    
+    return redirect(url_for('login'))
+
+
+
 
 # Rota do painel do usuário
 @app.route('/user')
@@ -251,13 +248,17 @@ def user():
         nome_usuario = usuario[0] if usuario else "Usuário"
         
         # Buscar viagens disponíveis
+        con = conectar_bd()
+        cur = con.cursor()
         cur.execute("SELECT * FROM viagens")
         viagens = cur.fetchall()
 
         # Buscar reservas do usuário
         cur.execute("SELECT r.*, viagens.origem, viagens.destino, viagens.data FROM reservas r JOIN viagens ON r.viagem_id = viagens.id WHERE r.usuario_id = ?", (usuario_id,))
-        reservas = cur.fetchall()    
 
+        reservas = cur.fetchall()    
+        
+        
         # Criar um dicionário para armazenar pontos de embarque e desembarque por viagem
         pontos_viagens = {}
 
@@ -269,6 +270,8 @@ def user():
             pontos = [row[0] for row in cur.fetchall()]
 
             pontos_viagens[viagem_id] = pontos  # Salva os pontos disponíveis na viagem
+
+  
 
         # Criar dicionário de poltronas ocupadas por viagem
         poltronas_ocupadas = {}
@@ -292,10 +295,11 @@ def user():
                 pontos_embarque_desembarque[viagem_id][embarque] = pontos_restantes
 
         con.close()
+        print(reservas)
+        return render_template('user.html', viagens=viagens, reservas=reservas, 
+                               nome_usuario=nome_usuario, poltronas_ocupadas=poltronas_ocupadas,
+                               pontos_viagens=pontos_viagens, pontos_embarque_desembarque=pontos_embarque_desembarque)  # Passando a lógica de embarque/desembarque
 
-        return render_template('user.html', reservas=reservas, viagens=viagens, nome_usuario=nome_usuario, 
-                               pontos_viagens=pontos_viagens, poltronas_ocupadas=poltronas_ocupadas, 
-                               pontos_embarque_desembarque=pontos_embarque_desembarque)
     return redirect(url_for('login'))
 
 
@@ -322,27 +326,9 @@ def reservar():
             flash("Erro: Poltrona já reservada", "error")
             return redirect(url_for('user'))  # Redireciona para a página do usuário com a mensagem de erro
 
-        # Verificar se a viagem existe
-        cur.execute("SELECT id FROM viagens WHERE id = ?", (viagem_id,))
-        if not cur.fetchone():
-            flash("Erro: Viagem não encontrada", "error")
-            return redirect(url_for('user'))
-
-        # Verificar se o ponto de embarque existe
-        cur.execute("SELECT id FROM pontos_parada WHERE id = ?", (embarque,))
-        if not cur.fetchone():
-            flash("Erro: Ponto de embarque não encontrado", "error")
-            return redirect(url_for('user'))
-
-        # Verificar se o ponto de desembarque existe
-        cur.execute("SELECT id FROM pontos_parada WHERE id = ?", (desembarque,))
-        if not cur.fetchone():
-            flash("Erro: Ponto de desembarque não encontrado", "error")
-            return redirect(url_for('user'))
-
         # Inserir a reserva na tabela de reservas com o status 'Pendente'
-        cur.execute("INSERT INTO reservas (usuario_id, viagem_id, poltrona, nome, embarque, desembarque, status) VALUES (?, ?, ?, ?, ?, ?, 'Pendente')", 
-                    (usuario_id, viagem_id, poltrona, nome, embarque, desembarque))
+        cur.execute("INSERT INTO reservas (usuario_id, viagem_id, poltrona, nome,embarque,desembarque, status) VALUES (?, ?, ?,?,?, ?, 'Pendente')", 
+                    (usuario_id, viagem_id, poltrona, nome,embarque,desembarque))
         reserva_id = cur.lastrowid  # ID da reserva recém criada
 
         # Inserir os pontos de embarque e desembarque na tabela 'reservas_pontos'
@@ -353,9 +339,9 @@ def reservar():
         con.commit()
         con.close()
 
+        
         # Redirecionar para a página do usuário
         return redirect(url_for('user'))
-
     return redirect(url_for('login'))
 
 
@@ -416,3 +402,4 @@ def pontos_parada(viagem_id):
 # Executar o app
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host="0.0.0.0")
+
