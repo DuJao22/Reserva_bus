@@ -10,7 +10,7 @@ app.secret_key = 'chave_secreta'
 # Função para conectar ao banco de dados
 def conectar_bd():
     try:
-        return sqlite.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
+        return sqlite3.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
     except Exception as e:
         print(f"Erro ao conectar ao banco: {e}")
         return None
@@ -58,8 +58,6 @@ def criar_tabelas():
                     status TEXT,  -- Agora a coluna status está incluída corretamente
                     FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
                     FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
-
-
 
         # Criar a tabela 'reservas_pontos' com embarque e desembarque referenciando 'pontos_parada'
         cur.execute('''CREATE TABLE IF NOT EXISTS reservas_pontos (
@@ -168,7 +166,7 @@ def admin():
             paradas = request.form.getlist('paradas[]')
 
             # Verifica se os campos obrigatórios estão preenchidos
-            if not destino or not horario or not onibus or not data:
+            if not destino ou not horario ou not onibus ou not data:
                 return "Erro: Todos os campos são obrigatórios", 400
             
             # Conecta ao banco de dados
@@ -230,8 +228,6 @@ def admin():
                                reserva=reserva)
     
     return redirect(url_for('login'))
-
-
 
 
 # Rota do painel do usuário
@@ -301,8 +297,6 @@ def user():
                                pontos_viagens=pontos_viagens, pontos_embarque_desembarque=pontos_embarque_desembarque)  # Passando a lógica de embarque/desembarque
 
     return redirect(url_for('login'))
-
-
 
 
 @app.route('/reservar', methods=['POST'])
@@ -384,7 +378,6 @@ def adicionar_ponto_parada():
     return redirect(url_for('login'))
 
 
-
 @app.route('/pontos_parada/<viagem_id>', methods=['GET'])
 def pontos_parada(viagem_id):
     con = conectar_bd()
@@ -396,10 +389,7 @@ def pontos_parada(viagem_id):
     return {'pontos': [{'id': p[0], 'parada': p[1], 'valor': p[2]} for p in pontos]}
 
 
-
-
 #######################################################
 # Executar o app
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host="0.0.0.0")
-
