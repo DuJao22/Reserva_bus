@@ -7,10 +7,10 @@ app = Flask(__name__)
 app.secret_key = 'chave_secreta'
 
 # Caminho do banco de dados
-DB_PATH = "/var/data/banco.db"
+DB_PATH = "data/banco.db"
 
-# Cria a pasta /var/data caso não exista
-os.makedirs("/var/data", exist_ok=True)
+# Cria a pasta data caso não exista
+os.makedirs("data", exist_ok=True)
 
 # Função para conectar ao banco de dados
 def conectar_bd():
