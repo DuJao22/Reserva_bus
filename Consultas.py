@@ -1,14 +1,7 @@
 import sqlite3
-import os
-
-# Caminho do banco de dados
-DB_PATH = "data/banco.db"
-
-# Cria a pasta data caso não exista
-os.makedirs("data", exist_ok=True)
 
 def conectar_bd():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    return sqlite3.connect('banco.db', check_same_thread=False)
 
 def obter_poltronas_com_dados():
     with conectar_bd() as con:
@@ -36,3 +29,6 @@ def obter_poltronas_com_dados():
             })
         
         return reservas
+
+
+
