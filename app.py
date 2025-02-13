@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import psycopg2
 from psycopg2 import sql
-import os
 from Consultas import obter_poltronas_com_dados
 
 app = Flask(__name__)
@@ -81,12 +80,11 @@ def criar_tabelas():
         con.commit()
 
         # Criar usuário administrador padrão se não existir
-        try:
+        cur.execute("SELECT * FROM usuarios WHERE email = %s", ("Admin_buser",))
+        if not cur.fetchone():
             cur.execute("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (%s, %s, %s, %s)", 
                         ("Admin Buser", "Admin_buser", "ADM_BUSS", "admin"))
             con.commit()
-        except psycopg2.errors.UniqueViolation:
-            pass  # Se o admin já existir, não faz nada
 
 criar_tabelas()
 
@@ -115,7 +113,7 @@ def login():
             else:
                 return redirect(url_for('user'))
         else:
-            flash('Login falhou', 'error')
+            return "Login falhou"
     return render_template('login.html')
 
 # Verificar poltronas disponíveis para uma viagem
@@ -147,8 +145,7 @@ def criar_usuario():
         return redirect(url_for('login'))
     except psycopg2.errors.UniqueViolation:
         con.close()
-        flash("Erro: Usuário já existe", "error")
-        return redirect(url_for('criar_usuario'))
+        return "Erro: Usuário já existe"
 
 # Rota do painel de administrador
 @app.route('/admin', methods=['GET', 'POST'])
@@ -183,12 +180,9 @@ def admin():
             con = conectar_bd()
             cur = con.cursor()
             
-            # Insere a viagem no banco de dados
-            cur.execute("INSERT INTO viagens (destino, horario, onibus, data) VALUES (%s, %s, %s, %s)", 
+            # Insere a viagem no banco de dados e retorna o ID da viagem inserida
+            cur.execute("INSERT INTO viagens (destino, horario, onibus, data) VALUES (%s, %s, %s, %s) RETURNING id", 
                         (destino, horario, onibus, data))
-            con.commit()
-
-            # Pega o ID da viagem inserida
             viagem_id = cur.fetchone()[0]
 
             # Insere as paradas associadas a essa viagem
@@ -324,7 +318,7 @@ def reservar():
             return redirect(url_for('user'))  # Redireciona para a página do usuário com a mensagem de erro
 
         # Inserir a reserva na tabela de reservas com o status 'Pendente'
-        cur.execute("INSERT INTO reservas (usuario_id, viagem_id, poltrona, nome, embarque, desembarque, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pendente')", 
+        cur.execute("INSERT INTO reservas (usuario_id, viagem_id, poltrona, nome, embarque, desembarque, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pendente') RETURNING id", 
                     (usuario_id, viagem_id, poltrona, nome, embarque, desembarque))
         reserva_id = cur.fetchone()[0]  # ID da reserva recém criada
 
