@@ -2,11 +2,12 @@ import psycopg2
 from psycopg2 import sql
 
 # Configurações do banco de dados PostgreSQL
-DB_HOST = "dpg-cukn8dqn91rc73at9ca0-a.oregon-postgres.render.com"
-DB_NAME = "reserva_buss"
-DB_USER = "reserva_buss_user"
-DB_PASSWORD = "lPGSnYEbsyHqohl2PPVb559392YuoNhM"
+DB_HOST = "dpg-cun5vslumphs73f05c6g-a"
+DB_NAME = "reserva_buss_1"
+DB_USER = "dujao_reserva_buss"
+DB_PASSWORD = "qAaZHkci0E8hbUKUYrGUV1WhLzN0eaIe"
 DB_PORT = 5432
+
 
 def conectar_bd():
     return psycopg2.connect(
