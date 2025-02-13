@@ -5,4 +5,4 @@ Werkzeug==2.2.3
 gunicorn==20.1.0
 uwsgi==2.0.21
 sqlitecloud
-
+psycopg2
