@@ -10,7 +10,7 @@ app.secret_key = 'chave_secreta'
 # Função para conectar ao banco de dados
 def conectar_bd():
     try:
-        return sqlite3.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
+        return sqlitecloud.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
     except Exception as e:
         print(f"Erro ao conectar ao banco: {e}")
         return None
