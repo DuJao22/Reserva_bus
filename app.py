@@ -166,7 +166,7 @@ def admin():
             paradas = request.form.getlist('paradas[]')
 
             # Verifica se os campos obrigatórios estão preenchidos
-            if not destino ou not horario ou not onibus ou not data:
+            if not destino or not horario or not onibus or not data:
                 return "Erro: Todos os campos são obrigatórios", 400
             
             # Conecta ao banco de dados
