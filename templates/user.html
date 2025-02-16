@@ -4,50 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Usuário</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: white;
-            text-align: center;
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
             margin: 0;
             padding: 0;
         }
+
         .header {
-            background-color: #4B0082;
+            background-color: #6A0DAD;
             padding: 20px;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
+            text-align: center;
+            color: white;
         }
+
+        .image-container {
+            width: 100%;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            border-bottom: 4px solid #6A0DAD;
+        }
+
         .container {
             display: flex;
             flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            width: 90%;
-            margin: 20px auto;
-        } 
+            justify-content: space-between;
+            padding: 20px;
+            gap: 20px;
+        }
+
         .left-panel, .right-panel {
             background: #333;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
             flex: 1;
-            margin: 10px;
             min-width: 300px;
+            margin: 10px;
         }
+
+        .left-panel h3, .right-panel h3 {
+            color: #FFF;
+            margin-bottom: 15px;
+        }
+
+        .info p, .right-panel p {
+            color: #E0E0E0;
+            margin-bottom: 10px;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #222;
+            color: #E0E0E0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #6A0DAD;
+        }
+
+        th {
+            background-color: #6A0DAD;
+            color: #FFF;
+        }
+
+        tr:nth-child(even) {
+            background-color: #2A2A2A;
+        }
+
+        tr:hover {
+            background-color: #6A0DAD;
+            color: #FFF;
+        }
+
+        .viagem {
+            background: #222;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+        }
+
+        .viagem p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #FFF;
+            margin-bottom: 5px;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            color: #E0E0E0;
+            border: 1px solid #6A0DAD;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        button[type="submit"], #locationButton {
+            background-color: #6A0DAD;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button[type="submit"]:hover, #locationButton:hover {
+            background-color: #8A2BE2;
+        }
+
         .poltronas {
             display: grid;
-            grid-template-columns: repeat(4, auto);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            justify-content: center;
-            margin: 20px auto;
-            padding: 10px;
-            width: fit-content;
-            background: #222;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
         }
+
         .poltrona {
             width: 50px;
             height: 50px;
@@ -57,153 +159,98 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
             cursor: pointer;
+            font-weight: bold;
         }
+
         .poltrona.ocupada {
             background-color: red;
             cursor: not-allowed;
         }
+
         .poltrona:hover:not(.ocupada) {
             background-color: #6A0DAD;
         }
-        .btn {
-            background-color: #4B0082;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
+
+        #map {
+            height: 400px;
+            width: 100%;
+            display: none; /* Initially hidden */
         }
-        .image-container {
-            margin-top: 20px;
-        }
-        .image-container img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-        }
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
+                width: 100%;
             }
-         /* Contêiner para permitir rolagem horizontal */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    padding: 10px;
-}
-
-/* Estilização da Tabela */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-    background-color: #121212; /* Preto */
-    color: #e0e0e0; /* Cinza claro para contraste */
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-/* Cabeçalho da Tabela */
-th {
-    background-color: #6a0dad; /* Roxo */
-    color: #ffffff;
-    text-transform: uppercase;
-    padding: 12px;
-    text-align: left;
-}
-
-/* Células da Tabela */
-td {
-    padding: 10px;
-    border: 1px solid #6a0dad; /* Roxo */
-}
-
-/* Alternância de cores nas linhas */
-tr:nth-child(even) {
-    background-color: #1e1e1e; /* Cinza escuro */
-}
-
-/* Efeito de hover nas linhas */
-tr:hover {
-    background-color: #6a0dad; /* Roxo */
-    color: #ffffff;
-}
-
-/* Responsividade para telas menores */
-@media screen and (max-width: 600px) {
-    th, td {
-        padding: 8px;
-        font-size: 14px;
-    }
-    
-    table {
-        min-width: 100%;
-    }
-}
-
+        
+            .poltronas {
+                grid-template-columns: repeat(4, 1fr); /* Ajuste para 2 colunas em vez de 4 */
+            }
+        
+            table {
+                width: 100%; /* Garantir que a tabela ocupe toda a largura */
+                table-layout: fixed; /* Força a tabela a ter colunas de largura fixa */
+            }
+        
+            .left-panel, .right-panel {
+                margin-bottom: 20px;
+                width: 100%; /* Garantir que os painéis tenham 100% da largura */
+            }
+        
+            .image-container img {
+                width: 100%; /* A imagem ocupa toda a largura disponível */
+                height: auto; /* Mantém a proporção da imagem */
+            }
+        
+            .header {
+                width: 100%; /* Cabeçalho ocupa toda a largura */
+                text-align: center; /* Ajusta o texto ao centro */
+            }
         }
     </style>
-    <script>
-        function selecionarPoltrona(poltrona, inputId) {
-            if (!poltrona.classList.contains('ocupada')) {
-                document.getElementById(inputId).value = poltrona.innerText;
-            }
-        }
-
-        function atualizarDesembarque(embarqueId, desembarqueId) {
-            var embarque = document.getElementById(embarqueId);
-            var desembarque = document.getElementById(desembarqueId);
-            var index = embarque.selectedIndex;
-            
-            for (var i = 0; i < desembarque.options.length; i++) {
-                desembarque.options[i].style.display = i > index ? 'block' : 'none';
-            }
-            desembarque.selectedIndex = index + 1;
-        }
-    </script>
 </head>
 <body>
     <div class="header">Empresa Turismo</div>
-    <div class="image-container">
-        <img src="https://gizmodo.uol.com.br/wp-content/blogs.dir/8/files/2023/04/onibus-double-decker-aguia-branca.jpg" alt="Imagem da Empresa">
-    </div>
+    <center>
+        <div class="image-container">
+            <img src="https://gizmodo.uol.com.br/wp-content/blogs.dir/8/files/2023/04/onibus-double-decker-aguia-branca.jpg" alt="Imagem da Empresa">
+        </div>
+    </center>
     <div class="container">
         <div class="left-panel">
             <h3>Bem-vindo, {{ nome_usuario }}!</h3>
             <h3>Suas Reservas</h3>
             <div class="info">
-    {% if reservas %}
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Embarque</th>
-                        <th>Desembarque</th>
-                        <th>Data</th>
-                        <th>Passageiro</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for reserva in reservas %}
-                        <tr>
-                            <td>{{ reserva[5] }}</td>
-                            <td>{{ reserva[6] }}</td>
-                            <td>{{ reserva[10] }}</td>
-                            <td>{{ reserva[4] }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                {% if reservas %}
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Embarque</th>
+                                    <th>Desembarque</th>
+                                    <th>Data</th>
+                                    <th>Passageiro</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reserva in reservas %}
+                                    <tr>
+                                        <td>{{ reserva[5] }}</td>
+                                        <td>{{ reserva[6] }}</td>
+                                        <td>{{ reserva[10] }}</td>
+                                        <td>{{ reserva[4] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Você ainda não possui reservas.</p>
+                {% endif %}
+            </div>
         </div>
-    {% else %}
-        <p>Você ainda não possui reservas.</p>
-    {% endif %}
-</div>
 
-        </div>
         <div class="right-panel">
             <h3>Viagens Disponíveis</h3>
             {% if viagens %}
@@ -211,36 +258,39 @@ tr:hover {
                     <div class="viagem">
                         <p><strong>Destino:</strong> {{ viagem[2] }}</p>
                         <p><strong>Horário:</strong> {{ viagem[4] }} - <strong>Data:</strong> {{ viagem[3] }}</p>
-                        <p>
-                        <form method="POST" action="/reservar">
-                            <label for="embarque_{{ viagem[0] }}">Embarque:</label>
-                            <select id="embarque_{{ viagem[0] }}" name="embarque" required onchange="atualizarDesembarque('embarque_{{ viagem[0] }}', 'desembarque_{{ viagem[0] }}')">
-                                {% for opcao in pontos_viagens[viagem[0]] %}
-                                    <option value="{{ opcao }}">{{ opcao }}</option>
-                                {% endfor %}
-                            </select>
-                        </p>
-                        <p>
-                            <label for="desembarque_{{ viagem[0] }}">Desembarque:</label>
-                            <select id="desembarque_{{ viagem[0] }}" name="desembarque" required>
-                                {% for opcao in pontos_viagens[viagem[0]] %}
-                                    <option value="{{ opcao }}">{{ opcao }}</option>
-                                {% endfor %}
-                            </select>
-                        </p>
-                        <h4>Escolha sua Poltrona</h4>
-                        <div class="poltronas">
-                            {% for i in range(1, 51) %}
-                                <div class="poltrona {% if i in poltronas_ocupadas[viagem[0]] %}ocupada{% endif %}" onclick="selecionarPoltrona(this, 'poltrona_{{ viagem[0] }}')">
-                                    {{ i }}
-                                </div>
-                            {% endfor %}
-                        </div>
                         
+                        <form method="POST" action="/reservar">
+                            <div class="form-group">
+                                <label for="embarque_{{ viagem[0] }}">Embarque:</label>
+                                <select id="embarque_{{ viagem[0] }}" name="embarque" required onchange="atualizarDesembarque('{{ viagem[0] }}')">
+                                    {% for opcao in pontos_viagens[viagem[0]] %}
+                                        <option value="{{ opcao }}">{{ opcao }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="desembarque_{{ viagem[0] }}">Desembarque:</label>
+                                <select id="desembarque_{{ viagem[0] }}" name="desembarque" required>
+                                    {% for opcao in pontos_viagens[viagem[0]] %}
+                                        <option value="{{ opcao }}">{{ opcao }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <h4>Escolha sua Poltrona</h4>
+                            <div class="poltronas">
+                                {% for i in range(1, 51) %}
+                                    <div class="poltrona {% if i in poltronas_ocupadas[viagem[0]] %}ocupada{% endif %}" onclick="selecionarPoltrona(this, '{{ viagem[0] }}')">
+                                        {{ i }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <p></p>
                             <input type="hidden" name="viagem_id" value="{{ viagem[0] }}">
                             <input type="number" id="poltrona_{{ viagem[0] }}" name="poltrona" placeholder="Poltrona" required readonly>
                             <p><input type="text" name="nome" placeholder="Nome" required></p>
-                            <button type="submit" class="btn">Reservar</button>
+                            <button type="submit">Reservar</button>
                         </form>
                     </div>
                 {% endfor %}
@@ -249,5 +299,37 @@ tr:hover {
             {% endif %}
         </div>
     </div>
+
+    <!-- Button to show the map -->
+    <center><a href="/map"><button id="locationButton">Ver Localização do Ônibus</button></a></center>
+
+  
+    
+
+    
+    <script>
+        
+
+        function atualizarDesembarque(viagemId) {
+            const embarqueSelect = document.getElementById('embarque_' + viagemId);
+            const desembarqueSelect = document.getElementById('desembarque_' + viagemId);
+            const selectedEmbarque = embarqueSelect.value;
+
+            desembarqueSelect.innerHTML = '';
+
+            // Supondo que pontos_viagens[viagemId] seja um objeto acessível aqui
+            const pontos = pontos_viagens[viagemId];
+
+            pontos.forEach(ponto => {
+                if (ponto !== selectedEmbarque) {
+                    const option = document.createElement('option');
+                    option.value = ponto;
+                    option.textContent = ponto;
+                    desembarqueSelect.appendChild(option);
+                }
+            });
+        }
+    </script>
 </body>
-</html>
+    </html>
+    
