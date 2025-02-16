@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([0, 0], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        let marker = L.marker([0, 0]).addTo(map);
+
+        function updateLocation() {
+            fetch('/get_location')
+                .then(response => response.json())
+                .then(data => {
+                    const { latitude, longitude } = data;
+                    map.setView([latitude, longitude], 13);
+                    marker.setLatLng([latitude, longitude]);
+                });
+        }
+
+        setInterval(updateLocation, 30000);
+        updateLocation();
+    </script>
+</body>
+</html>
