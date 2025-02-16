@@ -1,34 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import psycopg2
-from psycopg2 import sql
+from flask import Flask, render_template, request, redirect, url_for, session,flash,jsonify
+import sqlite3
+
 from Consultas import obter_poltronas_com_dados
 
 app = Flask(__name__)
 app.secret_key = 'chave_secreta'
 
-# Configurações do banco de dados PostgreSQL
-DB_HOST = "dpg-cun5vslumphs73f05c6g-a"
-DB_NAME = "reserva_buss_1"
-DB_USER = "dujao_reserva_buss"
-DB_PASSWORD = "qAaZHkci0E8hbUKUYrGUV1WhLzN0eaIe"
-DB_PORT = 5432
 
 # Função para conectar ao banco de dados
 def conectar_bd():
-    return psycopg2.connect(
-        host=DB_HOST,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        port=DB_PORT
-    )
+    return sqlite3.connect('banco.db', check_same_thread=False)
 
 # Criar tabelas no banco de dados
 def criar_tabelas():
     with conectar_bd() as con:
         cur = con.cursor()
         cur.execute('''CREATE TABLE IF NOT EXISTS usuarios (
-                            id SERIAL PRIMARY KEY,
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
                             nome TEXT,
                             email TEXT UNIQUE,
                             senha TEXT,
@@ -38,7 +26,7 @@ def criar_tabelas():
 
         # Criar a tabela 'viagens'
         cur.execute('''CREATE TABLE IF NOT EXISTS viagens (
-                            id SERIAL PRIMARY KEY,
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
                             origem TEXT,
                             destino TEXT,
                             data TEXT,
@@ -47,7 +35,7 @@ def criar_tabelas():
 
         # Criar a tabela 'pontos_parada'
         cur.execute('''CREATE TABLE IF NOT EXISTS pontos_parada (
-                            id SERIAL PRIMARY KEY,
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
                             viagem_id INTEGER,
                             parada TEXT,
                             valor REAL,
@@ -55,20 +43,22 @@ def criar_tabelas():
 
         # Criar a tabela 'reservas'
         cur.execute('''CREATE TABLE IF NOT EXISTS reservas (
-                            id SERIAL PRIMARY KEY,
-                            usuario_id INTEGER,
-                            viagem_id INTEGER,
-                            poltrona INTEGER,
-                            nome TEXT,
-                            embarque TEXT,
-                            desembarque TEXT,
-                            status TEXT,
-                            FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
-                            FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    usuario_id INTEGER,
+                    viagem_id INTEGER,
+                    poltrona INTEGER,
+                    nome TEXT,
+                    embarque TEXT,
+                    desembarque TEXT,
+                    status TEXT,  -- Agora a coluna status está incluída corretamente
+                    FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
+                    FOREIGN KEY(viagem_id) REFERENCES viagens(id))''')
+
+
 
         # Criar a tabela 'reservas_pontos' com embarque e desembarque referenciando 'pontos_parada'
         cur.execute('''CREATE TABLE IF NOT EXISTS reservas_pontos (
-                            id SERIAL PRIMARY KEY,
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
                             reserva_id INTEGER,
                             embarque_id INTEGER,
                             desembarque_id INTEGER,
@@ -80,13 +70,15 @@ def criar_tabelas():
         con.commit()
 
         # Criar usuário administrador padrão se não existir
-        cur.execute("SELECT * FROM usuarios WHERE email = %s", ("Admin_buser",))
-        if not cur.fetchone():
-            cur.execute("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (%s, %s, %s, %s)", 
+        try:
+            cur.execute("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)", 
                         ("Admin Buser", "Admin_buser", "ADM_BUSS", "admin"))
             con.commit()
+        except sqlite3.IntegrityError:
+            pass  # Se o admin já existir, não faz nada
 
 criar_tabelas()
+
 
 # Rota inicial
 @app.route('/')
@@ -101,7 +93,7 @@ def login():
         senha = request.form['senha']
         con = conectar_bd()
         cur = con.cursor()
-        cur.execute("SELECT * FROM usuarios WHERE email=%s AND senha=%s", (email, senha))
+        cur.execute("SELECT * FROM usuarios WHERE email=? AND senha=?", (email, senha))
         usuario = cur.fetchone()
         con.close()
         
@@ -121,7 +113,7 @@ def login():
 def verificar_poltronas(viagem_id):
     con = conectar_bd()
     cur = con.cursor()
-    cur.execute("SELECT poltrona, status FROM reservas WHERE viagem_id = %s", (viagem_id,))
+    cur.execute("SELECT poltrona, status FROM reservas WHERE viagem_id = ?", (viagem_id,))
     reservas = cur.fetchall()
     poltronas_ocupadas = [reserva[0] for reserva in reservas if reserva[1] == 'Confirmado']
     con.close()
@@ -139,11 +131,11 @@ def criar_usuario():
     cur = con.cursor()
     
     try:
-        cur.execute("INSERT INTO usuarios (nome, email, senha, cidade) VALUES (%s, %s, %s, %s)", (nome, email, senha, cidade))
+        cur.execute("INSERT INTO usuarios (nome, email, senha, cidade) VALUES (?, ?, ?, ?)", (nome, email, senha, cidade))
         con.commit()
         con.close()
         return redirect(url_for('login'))
-    except psycopg2.errors.UniqueViolation:
+    except sqlite3.IntegrityError:
         con.close()
         return "Erro: Usuário já existe"
 
@@ -156,7 +148,7 @@ def admin():
         # Conectar ao banco e buscar o nome do administrador
         con = conectar_bd()
         cur = con.cursor()
-        cur.execute("SELECT nome FROM usuarios WHERE id = %s", (usuario_id,))
+        cur.execute("SELECT nome FROM usuarios WHERE id = ?", (usuario_id,))
         usuario = cur.fetchone()
         con.close()
         
@@ -172,23 +164,25 @@ def admin():
             paradas = request.form.getlist('paradas[]')
 
             # Verifica se os campos obrigatórios estão preenchidos
-            if not (destino and horario and onibus and data):
-                flash("Erro: Todos os campos são obrigatórios", "error")
-                return redirect(url_for('admin'))
+            if not destino or not horario or not onibus or not data:
+                return "Erro: Todos os campos são obrigatórios", 400
             
             # Conecta ao banco de dados
             con = conectar_bd()
             cur = con.cursor()
             
-            # Insere a viagem no banco de dados e retorna o ID da viagem inserida
-            cur.execute("INSERT INTO viagens (destino, horario, onibus, data) VALUES (%s, %s, %s, %s) RETURNING id", 
+            # Insere a viagem no banco de dados
+            cur.execute("INSERT INTO viagens (destino, horario, onibus, data) VALUES (?, ?, ?, ?)", 
                         (destino, horario, onibus, data))
-            viagem_id = cur.fetchone()[0]
+            con.commit()
+
+            # Pega o ID da viagem inserida
+            viagem_id = cur.lastrowid
 
             # Insere as paradas associadas a essa viagem
             for parada in paradas:
                 if parada:  # Verifica se a parada não está vazia
-                    cur.execute("INSERT INTO pontos_parada (viagem_id, parada) VALUES (%s, %s)", 
+                    cur.execute("INSERT INTO pontos_parada (viagem_id, parada) VALUES (?, ?)", 
                                 (viagem_id, parada))
             
             con.commit()
@@ -222,6 +216,8 @@ def admin():
         reserva = obter_poltronas_com_dados()
         print(reservas_pendentes)
         
+        
+        
         return render_template('admin.html', 
                                viagens=viagens, 
                                poltronas_ocupadas=poltronas_ocupadas, 
@@ -230,6 +226,9 @@ def admin():
                                reserva=reserva)
     
     return redirect(url_for('login'))
+
+
+
 
 # Rota do painel do usuário
 @app.route('/user')
@@ -240,7 +239,7 @@ def user():
         cur = con.cursor()
 
         # Buscar nome do usuário
-        cur.execute("SELECT nome FROM usuarios WHERE id = %s", (usuario_id,))
+        cur.execute("SELECT nome FROM usuarios WHERE id = ?", (usuario_id,))
         usuario = cur.fetchone()
         nome_usuario = usuario[0] if usuario else "Usuário"
         
@@ -251,9 +250,10 @@ def user():
         viagens = cur.fetchall()
 
         # Buscar reservas do usuário
-        cur.execute("SELECT r.*, viagens.origem, viagens.destino, viagens.data FROM reservas r JOIN viagens ON r.viagem_id = viagens.id WHERE r.usuario_id = %s", (usuario_id,))
+        cur.execute("SELECT r.*, viagens.origem, viagens.destino, viagens.data FROM reservas r JOIN viagens ON r.viagem_id = viagens.id WHERE r.usuario_id = ?", (usuario_id,))
 
         reservas = cur.fetchall()    
+        
         
         # Criar um dicionário para armazenar pontos de embarque e desembarque por viagem
         pontos_viagens = {}
@@ -262,10 +262,12 @@ def user():
             viagem_id = viagem[0]
 
             # Buscar pontos de embarque e desembarque ordenados
-            cur.execute("SELECT parada FROM pontos_parada WHERE viagem_id = %s ORDER BY id", (viagem_id,))
+            cur.execute("SELECT parada FROM pontos_parada WHERE viagem_id = ? ORDER BY id", (viagem_id,))
             pontos = [row[0] for row in cur.fetchall()]
 
             pontos_viagens[viagem_id] = pontos  # Salva os pontos disponíveis na viagem
+
+  
 
         # Criar dicionário de poltronas ocupadas por viagem
         poltronas_ocupadas = {}
@@ -296,6 +298,9 @@ def user():
 
     return redirect(url_for('login'))
 
+
+
+
 @app.route('/reservar', methods=['POST'])
 def reservar():
     if 'usuario_id' in session:
@@ -311,28 +316,30 @@ def reservar():
         cur = con.cursor()
 
         # Verificar se a poltrona já está reservada
-        cur.execute("SELECT * FROM reservas WHERE viagem_id = %s AND poltrona = %s", (viagem_id, poltrona))
+        cur.execute("SELECT * FROM reservas WHERE viagem_id = ? AND poltrona = ?", (viagem_id, poltrona))
         reserva_existente = cur.fetchone()
         if reserva_existente:
             flash("Erro: Poltrona já reservada", "error")
             return redirect(url_for('user'))  # Redireciona para a página do usuário com a mensagem de erro
 
         # Inserir a reserva na tabela de reservas com o status 'Pendente'
-        cur.execute("INSERT INTO reservas (usuario_id, viagem_id, poltrona, nome, embarque, desembarque, status) VALUES (%s, %s, %s, %s, %s, %s, 'Pendente') RETURNING id", 
-                    (usuario_id, viagem_id, poltrona, nome, embarque, desembarque))
-        reserva_id = cur.fetchone()[0]  # ID da reserva recém criada
+        cur.execute("INSERT INTO reservas (usuario_id, viagem_id, poltrona, nome,embarque,desembarque, status) VALUES (?, ?, ?,?,?, ?, 'Pendente')", 
+                    (usuario_id, viagem_id, poltrona, nome,embarque,desembarque))
+        reserva_id = cur.lastrowid  # ID da reserva recém criada
 
         # Inserir os pontos de embarque e desembarque na tabela 'reservas_pontos'
-        cur.execute("INSERT INTO reservas_pontos (reserva_id, embarque_id, desembarque_id) VALUES (%s, %s, %s)", 
+        cur.execute("INSERT INTO reservas_pontos (reserva_id, embarque_id, desembarque_id) VALUES (?, ?, ?)", 
                     (reserva_id, embarque, desembarque))
 
         # Commit das mudanças e fechamento da conexão
         con.commit()
         con.close()
 
+        
         # Redirecionar para a página do usuário
         return redirect(url_for('user'))
     return redirect(url_for('login'))
+
 
 # Confirmar reserva (somente administrador)
 @app.route('/confirmar_reserva', methods=['POST'])
@@ -341,7 +348,7 @@ def confirmar_reserva():
         reserva_id = request.form['reserva_id']
         con = conectar_bd()
         cur = con.cursor()
-        cur.execute("UPDATE reservas SET status='Confirmado' WHERE id=%s", (reserva_id,))
+        cur.execute("UPDATE reservas SET status='Confirmado' WHERE id=?", (reserva_id,))
         con.commit()
         con.close()
         return redirect(url_for('admin'))
@@ -364,7 +371,7 @@ def adicionar_ponto_parada():
 
         con = conectar_bd()
         cur = con.cursor()
-        cur.execute("INSERT INTO pontos_parada (viagem_id, parada, valor) VALUES (%s, %s, %s)", 
+        cur.execute("INSERT INTO pontos_parada (viagem_id, parada, valor) VALUES (?, ?, ?)", 
                     (viagem_id, parada, valor))
         con.commit()
         con.close()
@@ -372,17 +379,46 @@ def adicionar_ponto_parada():
         return redirect(url_for('admin'))
     return redirect(url_for('login'))
 
+
+
 @app.route('/pontos_parada/<viagem_id>', methods=['GET'])
 def pontos_parada(viagem_id):
     con = conectar_bd()
     cur = con.cursor()
-    cur.execute("SELECT id, parada, valor FROM pontos_parada WHERE viagem_id = %s", (viagem_id,))
+    cur.execute("SELECT id, parada, valor FROM pontos_parada WHERE viagem_id = ?", (viagem_id,))
     pontos = cur.fetchall()
     con.close()
 
     return {'pontos': [{'id': p[0], 'parada': p[1], 'valor': p[2]} for p in pontos]}
 
+
+
+
 #######################################################
+latest_location = {'latitude': 0, 'longitude': 0}
+
+@app.route('/map')
+def map_view():
+    return render_template('map.html')
+
+@app.route('/update_location',methods=['POST'])
+def update_location():
+    global latest_location
+    data = request.json
+    latest_location = {
+        'latitude': data['latitude'],
+        'longitude': data['longitude']
+    }
+    return jsonify(success=True)
+
+@app.route('/get_location', methods=['GET'])
+def get_location():
+    return jsonify(latest_location)
+
+
+######
 # Executar o app
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    app.run(debug=True)
+
+           
