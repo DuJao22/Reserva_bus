@@ -1,22 +1,21 @@
-import psycopg2
-from psycopg2 import sql
+import sqlite3
+import sqlitecloud
 
-# Configurações do banco de dados PostgreSQL
-DB_HOST = "dpg-cun5vslumphs73f05c6g-a"
-DB_NAME = "reserva_buss_1"
-DB_USER = "dujao_reserva_buss"
-DB_PASSWORD = "qAaZHkci0E8hbUKUYrGUV1WhLzN0eaIe"
-DB_PORT = 5432
+
+"""
 
 
 def conectar_bd():
-    return psycopg2.connect(
-        host=DB_HOST,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        port=DB_PORT
-    )
+    try:
+        return sqlitecloud.connect("sqlitecloud://cd6aglqkhz.g2.sqlite.cloud:8860/banco.db?apikey=HMJnjaYXpCk6wFb3aaY9SGb4zw5eYEsCHInAbFyVYhc")
+    except Exception as e:
+        print(f"Erro ao conectar ao banco: {e}")
+        return None
+
+"""
+
+def conectar_bd():
+    return sqlite3.connect('banco.db', check_same_thread=False)
 
 def obter_poltronas_com_dados():
     with conectar_bd() as con:
@@ -44,3 +43,6 @@ def obter_poltronas_com_dados():
             })
         
         return reservas
+
+
+
